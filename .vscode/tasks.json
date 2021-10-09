@@ -1,0 +1,29 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Run xv6",
+            "type": "shell",
+            "command": "rm xv6.img fs.img && make && make qemu-nox"
+        },
+        {
+            "label": "Debug xv6",
+            "type": "shell",
+            "command": "rm xv6.img fs.img && make && make qemu-vscode",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "new",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ]
+}

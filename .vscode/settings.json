@@ -1,0 +1,12 @@
+{
+    "files.associations": {
+        "*.html": "html",
+        "user.h": "c",
+        "defs.h": "c",
+        "x86.h": "c",
+        "spinlock.h": "c",
+        "param.h": "c",
+        "syscall.h": "c"
+    },
+    "C_Cpp.clang_format_sortIncludes": false
+}
