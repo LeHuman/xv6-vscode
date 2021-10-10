@@ -4,8 +4,27 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "Clean",
+            "type": "shell",
+            "options": {
+                "cwd": "${workspaceRoot}",
+            },
+            "command": "make clean"
+        },
+        {
+            "label": "Build",
+            "type": "shell",
+            "options": {
+                "cwd": "${workspaceRoot}",
+            },
+            "command": "make"
+        },
+        {
             "label": "Run xv6",
             "type": "shell",
+            "options": {
+                "cwd": "${workspaceRoot}",
+            },
             "command": "rm xv6.img fs.img && make && make qemu-nox"
         },
         {
@@ -23,6 +42,9 @@
             "group": {
                 "kind": "build",
                 "isDefault": true
+            },
+            "options": {
+                "cwd": "${workspaceRoot}",
             }
         }
     ]
