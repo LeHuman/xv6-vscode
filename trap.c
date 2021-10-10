@@ -14,6 +14,100 @@ extern uint vectors[];  // in vectors.S: array of 256 entry pointers
 struct spinlock tickslock;
 uint ticks;
 
+
+/**
+ * @brief Each trap string name.
+ */
+static const char *trapnames[] = {
+    "Divide error                 ",
+    "Debug exception              ",
+    "Non-maskable interrupt       ",
+    "Breakpoint                   ",
+    "Overflow                     ",
+    "Bounds check                 ",
+    "Illegal opcode               ",
+    "Device not available         ",
+    "Double fault                 ",
+    "Reserved (not used since 486)",
+    "Invalid task switch segment  ",
+    "Segment not present          ",
+    "Stack exception              ",
+    "General protection fault     ",
+    "Page fault                   ",
+    "Reserved                     ",
+    "Floating point error         ",
+    "Aligment check               ",
+    "Machine check                ",
+    "SIMD floating point error    ",
+    "Interrupts                   ",
+    "System call                  ",
+    "Catchall                     ",
+};
+
+/**
+ * @brief Map every trapno to an array index.
+ * 
+ * @param trapno The actual trapno
+ * @return int The trap index
+ */
+static int trapnos(int trapno) {
+    if (trapno >= 0 && trapno <= 19) // processor defined
+        return trapno;
+    if (trapno >= 32 && trapno < 64) // interrupts
+        return 20;
+    if (trapno == 64) // syscalls
+        return 21;
+    return 22; // default
+};
+
+/**
+ * @brief Count print the syscalls that the current program called
+ * 
+ * @return int total number of syscalls
+ */
+static int countSyscalls(void) {
+    struct proc *curproc = myproc();
+    int s, i, c = 0;
+
+    cprintf("\n-----[ Syscalls ]-----\n");
+
+    for (i = 1; i < NELEM(curproc->syscounts); i++) {
+        s = curproc->syscounts[i];
+        if (s != 0) {
+            cprintf(" %s\t : %d\n", sysname(i), s);
+            c += s;
+        }
+    }
+    cprintf("  Total Syscalls : %d\n", c);
+
+    return c;
+}
+
+/**
+ * @brief Print the count of each trap that occurred
+ * 
+ * @return int The total number of traps
+ */
+int sys_countTraps(void) {
+    
+    countSyscalls();
+
+    struct proc *curproc = myproc();
+    int s, i, c = 0;
+
+    cprintf("\n-------------[ Traps ]--------------\n");
+
+    for (i = 0; i < NELEM(curproc->trapcounts) - 1; i++) {
+        s = curproc->trapcounts[i];
+        if (s != 0) {
+            cprintf(" %s : %d\n", trapnames[i], s);
+            c += s;
+        }
+    }
+    cprintf("  Total Traps                  : %d\n", c);
+    return c;
+}
+
 void
 tvinit(void)
 {
@@ -36,6 +130,12 @@ idtinit(void)
 void
 trap(struct trapframe *tf)
 {
+
+  // Update trap counter if process exists
+  struct proc *curproc = myproc();
+  if (curproc != 0)
+      ++curproc->trapcounts[trapnos(tf->trapno)];
+
   if(tf->trapno == T_SYSCALL){
     if(myproc()->killed)
       exit();

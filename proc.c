@@ -295,6 +295,8 @@ wait(void)
         p->name[0] = 0;
         p->killed = 0;
         p->state = UNUSED;
+        memset(&p->trapcounts, 0, sizeof(p->trapcounts)); // clear trap counter
+        memset(&p->syscounts, 0, sizeof(p->syscounts));   // clear syscall counter
         release(&ptable.lock);
         return pid;
       }

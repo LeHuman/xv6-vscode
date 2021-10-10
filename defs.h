@@ -155,6 +155,7 @@ int             argstr(int, char**);
 int             fetchint(uint, int*);
 int             fetchstr(uint, char**);
 void            syscall(void);
+const char*     sysname(int n);
 
 // timer.c
 void            timerinit(void);
@@ -164,6 +165,7 @@ void            idtinit(void);
 extern uint     ticks;
 void            tvinit(void);
 extern struct spinlock tickslock;
+const char*     trapname(int trapno);
 
 // uart.c
 void            uartinit(void);
