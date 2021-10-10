@@ -20,17 +20,30 @@
             "command": "make"
         },
         {
+            "label": "Kill",
+            "type": "shell",
+            "command": "kill $(ps aux | grep qemu-system-i386 | grep -v grep | awk '{print $2}') || true",
+        },
+        {
             "label": "Run xv6",
             "type": "shell",
             "options": {
                 "cwd": "${workspaceRoot}",
             },
-            "command": "rm xv6.img fs.img && make && make qemu-nox"
+            "dependsOn": [
+                "Kill",
+                "Build",
+            ],
+            "command": "make qemu-nox"
         },
         {
             "label": "Debug xv6",
             "type": "shell",
-            "command": "rm xv6.img fs.img && make && make qemu-vscode",
+            "dependsOn": [
+                "Kill",
+                "Build",
+            ],
+            "command": "make qemu-vscode",
             "presentation": {
                 "echo": true,
                 "reveal": "always",
