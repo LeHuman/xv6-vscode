@@ -4,7 +4,7 @@
 #include "fcntl.h"
 
 // Change test case
-#define TEST_CASE 2
+#define TEST_CASE 4
 
 #define __runTestCase(x) testCase##x()
 #define _runTestCase(x) __runTestCase(x)
@@ -27,7 +27,7 @@ void testCase2(void) {
     wait();
 }
 
-// +53 syscalls
+// +40 syscalls
 void testCase3(void) {
     int p[2], i, fd;
     char *arg = "Hi";
@@ -49,26 +49,56 @@ void testCase3(void) {
         kill(0);
         getpid();
     }
-
-    fd = open("backup", O_CREATE | O_RDWR);
-    pipe(p);
-    write(fd, arg, 2);
-    read(fd, &inbuf, 2);
-    fstat(fd, &fs);
-    close(fd);
-    mknod("", -1, -1);
-    unlink(err);
-    link(err, err);
-    mkdir("test");
-    dup(0);
-    chdir("");
-
-    sleep(100);
 }
 
+// +124 syscalls
+void testCase4(void) {
+    int p[2], i, fd;
+    char *arg = "Hi";
+    char *err = (char *)-1;
+    char inbuf[16];
+    struct stat fs;
+
+    for (i = 0; i < 10; i++) {
+        if (fork() == 0) {
+            close(1);
+            fd = open("backup", O_CREATE | O_RDWR);
+            dup(fd);
+            printf(1, "Child: Hello!\n");
+            close(fd);
+            exec("echo", &arg);
+        }
+        wait();
+        kill(0);
+        getpid();
+    }
+
+    for (i = 0; i < 8; i++) {
+        sleep(0);
+        uptime();
+        sbrk(0);
+    }
+
+    for (i = 0; i < 5; i++) {
+        fd = open("backup", O_CREATE | O_RDWR);
+        pipe(p);
+        write(fd, arg, 2);
+        read(fd, &inbuf, 2);
+        fstat(fd, &fs);
+        close(fd);
+        mknod("", -1, -1);
+        unlink(err);
+        link(err, err);
+        mkdir("test");
+        dup(0);
+        chdir("");
+    }
+}
+
+// +3 syscalls because sh calls both sbrk and exec, and test calls countTraps
 int main(int argc, char *argv[]) {
     runTestCase();
-    // +3 syscalls because somthing calls sbrk, sh calls exec, and test calls countTraps
+
     countTraps();
     exit();
 }
