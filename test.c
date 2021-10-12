@@ -37,7 +37,6 @@ void testCase3(void) {
 
     for (i = 0; i < 10; i++) {
         if (fork() == 0) {
-            // Should not add to parent counter
             close(1);
             fd = open("backup", O_CREATE | O_RDWR);
             dup(fd);
