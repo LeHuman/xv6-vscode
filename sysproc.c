@@ -89,3 +89,20 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+
+void* sys_GetSharedPage(void) {
+    int key, count;
+
+    // TODO: Add page Here
+
+    if (argint(0, &key) < 0 || argint(1, &count) < 0)
+        return -1;
+}
+
+int sys_FreeSharedPage(void) {
+    int key;
+    if (argint(0, &key) < 0)
+        return -1;
+    // TODO: Free page Here
+    return 0;
+}
