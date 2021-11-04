@@ -375,6 +375,8 @@ void *mapSharedRegion(struct proc *p, int key) {
         }
     }
 
+    region->refCount++; // New Reference increases counter
+
     ref->region = region;         // Set the reference to the region
     return (ref->va = p->shaddr); // Set the reference va to the current shared pointer and return it
 }
@@ -405,7 +407,44 @@ void *allocSharedVM(int key, int count) {
         return (void *)-1;
     }
 
-    region->refCount++;
-
     return mapSharedRegion(currProc, key);
+}
+
+int deallocSharedVM(int key) {
+
+    if (key < 0 || key > MAX_SH_KEY) { // Must be within set limits to keep implement simple
+        return -1;
+    }
+
+    struct proc *currProc = myproc(); // Get current process
+    sharedReference_t *ref = currProc->shared + key;
+    sharedRegion_t *region = sharedRegions + key; // Get pointer to the shared region that is being requested
+
+    if (ref->region == 0 || ref->va == 0)
+        return -1;
+
+    // Clear page table entries for shared pages
+    for (int i = 0; i < region->pageCount; i++) {
+        pte_t *pte = walkpgdir(currProc->pgdir, (void *)(ref->va + (i * PGSIZE)), 0);
+        if (pte == 0) {
+            return -1;
+        }
+        *pte = 0;
+    }
+
+    // Clear Reference on proc
+    ref->region = 0;
+    ref->va = 0;
+
+    // check that the region is not already deallocated / not initalized and refCount != 0
+    if (region->valid && (--region->refCount) == 0) {
+        for (int i = 0; i < region->pageCount; i++) {
+            kfree(P2V(region->pages[i]));
+            region->pages[i] = 0;
+        }
+        region->valid = 0;
+        region->pageCount = 0;
+    }
+
+    return 0;
 }

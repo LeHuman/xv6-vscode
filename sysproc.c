@@ -74,19 +74,19 @@ int sys_uptime(void) {
     return xticks;
 }
 
-void *sys_GetSharedPage(void) {
+char *sys_GetSharedPage(void) {
     int key, count;
 
     if (argint(0, &key) < 0 || argint(1, &count) < 0)
         return (void *)-1;
 
-    return allocSharedVM(key, count);
+    return (char *)allocSharedVM(key, count);
 }
 
 int sys_FreeSharedPage(void) {
     int key;
     if (argint(0, &key) < 0)
         return -1;
-    // TODO: Free page Here
-    return 0;
+
+    return deallocSharedVM(key);
 }
