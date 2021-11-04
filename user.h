@@ -23,7 +23,7 @@ int getpid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
-void* GetSharedPage(int, int);
+char* GetSharedPage(int, int);
 int FreeSharedPage(int);
 
 // ulib.c
