@@ -3,8 +3,8 @@
 #include "user.h"
 
 int main(int argc, char *argv[]) {
-    int fd = 15;
-    int s = close(fd);
-    printf(1, "fd: %d stat: %d\n", fd, s);
+    // void *shp = GetSharedPage(0, 3);
+    void *shp = malloc(512);
+    printf("%p\n", shp);
     exit();
 }
