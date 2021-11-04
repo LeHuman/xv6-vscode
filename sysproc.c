@@ -74,40 +74,59 @@ int sys_uptime(void) {
     return xticks;
 }
 
-#define MAX_SH_PAGES NPROC
-#define MAX_SH_KEY NPROC
+sharedRegion_t sharedRegions[MAX_SH_KEY]; // Keys range from 0-NPROC => 0-63
 
-int sharedPagesRefs[MAX_SH_KEY] = {0};
-void *sharedPages[MAX_SH_KEY][MAX_SH_PAGES] = {0}; // Keys range from 1-NPROC => 1-63 | Maximum of NPROC pages can be shared by each process
+void *mapSharedRegion(struct proc *p, int key) {
+    sharedRegion_t *region = sharedRegions + key; // get region we are intrested in
+    sharedReference_t *ref = p->shared + key;
 
-void *growprocsh(int k, int n) {
+    if (ref->region->valid) // If this region has already been mapped to this process return the mapped virtual address
+        return ref->va;
 
-    if (k < 0 || k > MAX_SH_KEY || n < 0 || n > MAX_SH_PAGES) { // Must be within set limits to keep implement simple
+    if (p->shaddr == 0) { // Init shared address to KERNBASE // TODO: Do this when init proc
+        p->shaddr = KERNBASE;
+    }
+
+    // Starting from KERNBASE or shaddr, subtract `PGSIZE` from current shared region addr (shaddr), then map using this addr. repeat `pageCount` times
+    for (int k = 0; k < region->pageCount; k++) {
+        if (mappages(p->pgdir, (p->shaddr -= PGSIZE), PGSIZE, V2P(region->pages[k]), PTE_W | PTE_U) < 0) {
+            return (void *)-1;
+        }
+    }
+
+    ref->region = region;         // Set the reference to the region
+    return (ref->va = p->shaddr); // Set the reference va to the current shared pointer and return it
+}
+
+void *growprocsh(int key, int count) {
+
+    if (key < 0 || key > MAX_SH_KEY || count <= 0 || count > MAX_SH_PAGES) { // Must be within set limits to keep implement simple
         return (void *)-1;
     }
 
-    struct proc *currProc = myproc(); // TODO: resize, multiple keys
+    struct proc *currProc = myproc();             // Get current process
+    sharedRegion_t *region = sharedRegions + key; // Get pointer to the shared region that is being requested
 
-    if (sharedPagesRefs[k] == 0) { // New shared page
-        void *mem;
-        for (int i = 0; i < n; i++) {
-            mem = kalloc(); // Physical memory
-            if (mem == 0) {
+    if (!region->valid) {                 // New shared page
+        for (int i = 0; i < count; i++) { // Create `count` number of pages
+            void *mem = kalloc();         // alloc mem
+            if (mem == 0) {               // Error
                 cprintf("allocuvm out of memory\n");
                 return (void *)-1;
             }
-            memset(mem, 0, PGSIZE);
-
-            currProc->shaddr -= PGSIZE; // Grow shared memory down from KERNBASE
-
-            // Map virtual page to physical page
-            if (mappages(currProc->pgdir, currProc->shaddr, PGSIZE, PADDR(mem), PTE_P | PTE_W | PTE_U) < 0) {
-                return (void *)-1;
-            }
+            memset(mem, 0, PGSIZE); // Clear memory
+            region->pages[i] = mem; // Save new page to region
         }
-    } else {
+        region->valid = 1;                  // region is now valid
+        region->refCount = 0;               // reset ref counter
+        region->pageCount = count;          // set the size of this region
+    } else if (count > region->pageCount) { // Resizing not supported, though returning a larger space than requested should be fine
+        return (void *)-1;
     }
-    sharedPagesRefs[k]++;
+
+    region->refCount++;
+
+    return mapSharedRegion(currProc, key);
 }
 
 void *sys_GetSharedPage(void) {

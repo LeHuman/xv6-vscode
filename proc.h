@@ -39,6 +39,29 @@ enum procstate { UNUSED,
                  RUNNING,
                  ZOMBIE };
 
+// typedef struct sharedMem_t {
+//     int valid;
+//     int key;
+//     void *va;
+// } sharedMem_t;
+
+#define MAX_SH_PAGES NPROC
+#define MAX_SH_KEY NPROC
+
+// A region of shared memory
+typedef struct sharedRegion_t {
+    int valid;                // Whether this region has been initalized
+    int refCount;             // references to this region
+    int pageCount;            // Count of allocated pages
+    uint pages[MAX_SH_PAGES]; // Maximum of NPROC pages can be shared by each region
+} sharedRegion_t;
+
+// A reference to a region of shared memory
+typedef struct sharedReference_t {
+    sharedRegion_t *region; // Region this references
+    void *va;               // The virtual address of this reference
+} sharedReference_t;
+
 // Per-process state
 struct proc {
     uint sz;                    // Size of process memory (bytes)
@@ -54,11 +77,8 @@ struct proc {
     struct file *ofile[NOFILE]; // Open files
     struct inode *cwd;          // Current directory
     char name[16];              // Process name (debugging)
-
-    uint shmem_key;  // Key for this process' shared memory region
-    void *shaddr;    // Virtual address of the start region of their shmem
-    uint shmem_size; // Size of the shared memory region
-    uint shref;      // Total refrences to this shared memory
+    void *shaddr;               // Virtual address of the start region of the total shared memory region
+    sharedReference_t shared[MAX_SH_KEY];
 };
 
 // Process memory is laid out contiguously, low addresses first:
