@@ -119,8 +119,7 @@ pde_t *setupkvm(void) {
     if (P2V(PHYSTOP) > (void *)DEVSPACE)
         panic("PHYSTOP too high");
     for (k = kmap; k < &kmap[NELEM(kmap)]; k++)
-        if (mappages(pgdir, k->virt, k->phys_end - k->phys_start,
-                     (uint)k->phys_start, k->perm) < 0) {
+        if (mappages(pgdir, k->virt, k->phys_end - k->phys_start, (uint)k->phys_start, k->perm) < 0) {
             freevm(pgdir);
             return 0;
         }
@@ -150,8 +149,7 @@ void switchuvm(struct proc *p) {
         panic("switchuvm: no pgdir");
 
     pushcli();
-    mycpu()->gdt[SEG_TSS] = SEG16(STS_T32A, &mycpu()->ts,
-                                  sizeof(mycpu()->ts) - 1, 0);
+    mycpu()->gdt[SEG_TSS] = SEG16(STS_T32A, &mycpu()->ts, sizeof(mycpu()->ts) - 1, 0);
     mycpu()->gdt[SEG_TSS].s = 0;
     mycpu()->ts.ss0 = SEG_KDATA << 3;
     mycpu()->ts.esp0 = (uint)p->kstack + KSTACKSIZE;
@@ -286,8 +284,7 @@ void clearpteu(pde_t *pgdir, char *uva) {
 
 // Given a parent process's page table, create a copy
 // of it for a child.
-pde_t *
-copyuvm(pde_t *pgdir, uint sz) {
+pde_t *copyuvm(pde_t *pgdir, uint sz) {
     pde_t *d;
     pte_t *pte;
     uint pa, i, flags;
@@ -319,8 +316,7 @@ bad:
 
 //PAGEBREAK!
 // Map user virtual address to kernel address.
-char *
-uva2ka(pde_t *pgdir, char *uva) {
+char *uva2ka(pde_t *pgdir, char *uva) {
     pte_t *pte;
 
     pte = walkpgdir(pgdir, uva, 0);
@@ -360,10 +356,6 @@ sharedRegion_t sharedRegions[MAX_SH_KEY]; // Keys range from 0-NPROC => 0-63
 void *mapSharedRegion(struct proc *p, int key) {
     sharedRegion_t *region = sharedRegions + key; // get region we are intrested in
     sharedReference_t *ref = p->shared + key;
-
-    // for (int i = 0; i < MAX_SH_KEY; i++) { // TODO: dealloc regions
-    //     p->shared[i].region = 0;
-    // }
 
     if (ref->region && ref->region->valid) // If this region has already been mapped to this process return the mapped virtual address
         return ref->va;

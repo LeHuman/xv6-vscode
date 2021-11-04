@@ -39,12 +39,6 @@ enum procstate { UNUSED,
                  RUNNING,
                  ZOMBIE };
 
-// typedef struct sharedMem_t {
-//     int valid;
-//     int key;
-//     void *va;
-// } sharedMem_t;
-
 #define MAX_SH_PAGES NPROC
 #define MAX_SH_KEY NPROC
 
@@ -86,3 +80,4 @@ struct proc {
 //   original data and bss
 //   fixed-size stack
 //   expandable heap
+//   shared memory
