@@ -81,6 +81,8 @@ found:
     p->state = EMBRYO;
     p->pid = nextpid++;
 
+    p->shaddr = (void *)KERNBASE;
+
     release(&ptable.lock);
 
     // Allocate kernel stack.
@@ -165,7 +167,7 @@ int growproc(int n) {
 // Create a new process copying p as the parent.
 // Sets up stack to return as if from system call.
 // Caller must set state of returned proc to RUNNABLE.
-int fork(void) {
+int fork(void) { // TODO: Copy shared pages and references / increase references?
     int i, pid;
     struct proc *np;
     struct proc *curproc = myproc();

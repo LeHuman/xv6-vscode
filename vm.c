@@ -204,7 +204,7 @@ int allocuvm(pde_t *pgdir, uint oldsz, uint newsz) {
     char *mem;
     uint a;
 
-    if (newsz >= myproc()->shaddr)
+    if (newsz >= (uint)myproc()->shaddr)
         return 0;
     if (newsz < oldsz)
         return oldsz;
@@ -353,4 +353,59 @@ int copyout(pde_t *pgdir, uint va, void *p, uint len) {
         va = va0 + PGSIZE;
     }
     return 0;
+}
+
+sharedRegion_t sharedRegions[MAX_SH_KEY]; // Keys range from 0-NPROC => 0-63
+
+void *mapSharedRegion(struct proc *p, int key) {
+    sharedRegion_t *region = sharedRegions + key; // get region we are intrested in
+    sharedReference_t *ref = p->shared + key;
+
+    // for (int i = 0; i < MAX_SH_KEY; i++) { // TODO: dealloc regions
+    //     p->shared[i].region = 0;
+    // }
+
+    if (ref->region && ref->region->valid) // If this region has already been mapped to this process return the mapped virtual address
+        return ref->va;
+
+    // Starting from KERNBASE or shaddr, subtract `PGSIZE` from current shared region addr (shaddr), then map using this addr. repeat `pageCount` times
+    for (int k = 0; k < region->pageCount; k++) {
+        if (mappages(p->pgdir, (p->shaddr -= PGSIZE), PGSIZE, region->pages[k], PTE_W | PTE_U) < 0) {
+            return (void *)-1;
+        }
+    }
+
+    ref->region = region;         // Set the reference to the region
+    return (ref->va = p->shaddr); // Set the reference va to the current shared pointer and return it
+}
+
+void *allocSharedVM(int key, int count) {
+
+    if (key < 0 || key > MAX_SH_KEY || count <= 0 || count > MAX_SH_PAGES) { // Must be within set limits to keep implement simple
+        return (void *)-1;
+    }
+
+    struct proc *currProc = myproc();             // Get current process
+    sharedRegion_t *region = sharedRegions + key; // Get pointer to the shared region that is being requested
+
+    if (!region->valid) {                 // New shared page
+        for (int i = 0; i < count; i++) { // Create `count` number of pages
+            void *mem = kalloc();         // alloc mem
+            if (mem == 0) {               // Error
+                cprintf("allocuvm out of memory\n");
+                return (void *)-1;
+            }
+            memset(mem, 0, PGSIZE);      // Clear memory
+            region->pages[i] = V2P(mem); // Save new page to region
+        }
+        region->valid = 1;                  // region is now valid
+        region->refCount = 0;               // reset ref counter
+        region->pageCount = count;          // set the size of this region
+    } else if (count > region->pageCount) { // Resizing not supported, though returning a larger space than requested should be fine
+        return (void *)-1;
+    }
+
+    region->refCount++;
+
+    return mapSharedRegion(currProc, key);
 }
