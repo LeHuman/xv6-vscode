@@ -13,13 +13,13 @@ int main(int argc, char *argv[]) {
         while (shpc[0] == 0) {
         }
         printf(1, "%s\n", shpc);
+        printf(1, "%p %d\n", shpc, FreeSharedPage(0));
         exit();
     }
     while (shp[0] != 0) {
     }
     strcpy(shp, "Noice!");
     wait();
-
     printf(1, "%p %d\n", shp, FreeSharedPage(0));
     exit();
 }
