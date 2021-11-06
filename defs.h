@@ -186,6 +186,7 @@ void            switchkvm(void);
 int             copyout(pde_t*, uint, void*, uint);
 void            clearpteu(pde_t *pgdir, char *uva);
 void *          allocSharedVM(int key, int count);
+void            deallocProcAllSharedVM(struct proc *currProc);
 int             deallocSharedVM(int key);
 
 // number of elements in fixed-size array

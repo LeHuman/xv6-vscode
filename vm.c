@@ -375,7 +375,7 @@ void *mapSharedRegion(struct proc *p, int key) {
 
 void *allocSharedVM(int key, int count) {
 
-    if (key < 0 || key > MAX_SH_KEY || count <= 0 || count > MAX_SH_PAGES) { // Must be within set limits to keep implement simple
+    if (key < 0 || key >= MAX_SH_KEY || count <= 0 || count > MAX_SH_PAGES) { // Must be within set limits to keep implement simple
         return (void *)-1;
     }
 
@@ -402,13 +402,12 @@ void *allocSharedVM(int key, int count) {
     return mapSharedRegion(currProc, key);
 }
 
-int deallocSharedVM(int key) {
+int deallocProcSharedVM(struct proc *currProc, int key) {
 
-    if (key < 0 || key > MAX_SH_KEY) { // Must be within set limits to keep implement simple
+    if (key < 0 || key >= MAX_SH_KEY) { // Must be within set limits to keep implement simple
         return -1;
     }
 
-    struct proc *currProc = myproc(); // Get current process
     sharedReference_t *ref = currProc->shared + key;
     sharedRegion_t *region = sharedRegions + key; // Get pointer to the shared region that is being requested
 
@@ -438,5 +437,18 @@ int deallocSharedVM(int key) {
         region->pageCount = 0;
     }
 
-    return 0;
+    return region->refCount;
+}
+
+void deallocProcAllSharedVM(struct proc *currProc) {
+    sharedReference_t *refs = currProc->shared;
+    for (int key = 0; key < MAX_SH_KEY; key++) {
+        if (refs[key].region != 0 && refs[key].region->valid && refs[key].va != 0) { // region is referenced and valid
+            cprintf("Shared page not freed! pid:%d id:%d refs:%d\n", currProc->pid, key, deallocProcSharedVM(currProc, key));
+        }
+    }
+}
+
+int deallocSharedVM(int key) {
+    return deallocProcSharedVM(myproc(), key);
 }
