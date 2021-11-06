@@ -5,6 +5,9 @@
 int main(int argc, char *argv[]) {
     char *rx = GetSharedPage(0, 6);
     char *tx = GetSharedPage(6, 6);
+    tx = GetSharedPage(6, 6);
+    tx = GetSharedPage(6, 6);
+    tx = GetSharedPage(6, 6);
 
     while (tx[0] != 0) {
     }

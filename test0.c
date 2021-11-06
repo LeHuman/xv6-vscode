@@ -2,9 +2,13 @@
 #include "stat.h"
 #include "user.h"
 
+// test0|test1
+
 int main(int argc, char *argv[]) {
     char *tx = GetSharedPage(0, 6);
     char *rx = GetSharedPage(6, 6);
+    tx = GetSharedPage(0, 6);
+    tx = GetSharedPage(0, 6);
 
     while (tx[0] != 0) {
     }
@@ -26,5 +30,12 @@ int main(int argc, char *argv[]) {
 
     printf(1, "0 %p %d\n", tx, FreeSharedPage(0));
     printf(1, "0 %p %d\n", rx, FreeSharedPage(6));
+
+    if (fork() == 0) {
+        sleep(100);
+        char *tx = GetSharedPage(0, 6);
+        char *rx = GetSharedPage(6, 6);
+        printf(1, "Child!\n");
+    }
     exit();
 }
