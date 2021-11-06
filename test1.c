@@ -3,14 +3,28 @@
 #include "user.h"
 
 int main(int argc, char *argv[]) {
-    char *shpc = GetSharedPage(0, 3);
-    while (shpc[0] == 0) {
+    char *rx = GetSharedPage(0, 6);
+    char *tx = GetSharedPage(6, 6);
+
+    while (tx[0] != 0) {
     }
-    printf(1, "%s\n", shpc);
-    memset(shpc, 0, 7);
-    while (shpc[0] == 0) {
+    strcpy(tx, "1: Hello!");
+
+    while (rx[0] == 0) {
     }
-    printf(1, "%s\n", shpc);
-    printf(1, "%p %d\n", shpc, FreeSharedPage(0));
+    printf(1, "1 Received: %s\n", rx);
+    memset(rx, 0, 4096);
+
+    while (tx[0] != 0) {
+    }
+    strcpy(tx, "1: says Goodbye!");
+
+    while (rx[0] == 0) {
+    }
+    printf(1, "1 Received: %s\n", rx);
+    memset(rx, 0, 4096);
+
+    printf(1, "1 %p %d\n", rx, FreeSharedPage(0));
+    printf(1, "1 %p %d\n", tx, FreeSharedPage(6));
     exit();
 }
