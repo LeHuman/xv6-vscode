@@ -360,6 +360,8 @@ void *mapSharedRegion(struct proc *p, int key) {
     if (ref->region && ref->region->valid) // If this region has already been mapped to this process return the mapped virtual address
         return ref->va;
 
+    pushcli();
+
     // Starting from KERNBASE or shaddr, subtract `PGSIZE` from current shared region addr (shaddr), then map using this addr. repeat `pageCount` times
     for (int k = 0; k < region->pageCount; k++) {
         if (mappages(p->pgdir, (p->shaddr -= PGSIZE), PGSIZE, region->pages[k], PTE_W | PTE_U) < 0) {
@@ -368,6 +370,8 @@ void *mapSharedRegion(struct proc *p, int key) {
     }
 
     region->refCount++; // New Reference increases counter
+
+    popcli();
 
     ref->region = region;         // Set the reference to the region
     return (ref->va = p->shaddr); // Set the reference va to the current shared pointer and return it
@@ -382,7 +386,8 @@ void *allocSharedVM(int key, int count) {
     struct proc *currProc = myproc();             // Get current process
     sharedRegion_t *region = sharedRegions + key; // Get pointer to the shared region that is being requested
 
-    if (!region->valid) {                 // New shared page
+    if (!region->valid) { // New shared page
+        pushcli();
         for (int i = 0; i < count; i++) { // Create `count` number of pages
             void *mem = kalloc();         // alloc mem
             if (mem == 0) {               // Error
@@ -392,9 +397,10 @@ void *allocSharedVM(int key, int count) {
             memset(mem, 0, PGSIZE);      // Clear memory
             region->pages[i] = V2P(mem); // Save new page to region
         }
-        region->valid = 1;                  // region is now valid
-        region->refCount = 0;               // reset ref counter
-        region->pageCount = count;          // set the size of this region
+        region->valid = 1;         // region is now valid
+        region->refCount = 0;      // reset ref counter
+        region->pageCount = count; // set the size of this region
+        popcli();
     } else if (count > region->pageCount) { // Resizing not supported, though returning a larger space than requested should be fine
         return (void *)-1;
     }
@@ -429,12 +435,14 @@ int deallocProcSharedVM(struct proc *currProc, int key) {
 
     // check that the region is not already deallocated / not initalized and refCount != 0
     if (region->valid && (--region->refCount) == 0) {
+        pushcli();
         for (int i = 0; i < region->pageCount; i++) {
             kfree(P2V(region->pages[i]));
             region->pages[i] = 0;
         }
         region->valid = 0;
         region->pageCount = 0;
+        popcli();
     }
 
     return region->refCount;
