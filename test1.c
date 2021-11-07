@@ -15,6 +15,7 @@ int main(int argc, char *argv[]) {
 
     while (rx[0] == 0) {
     }
+    sleep(10);
     printf(1, "1 Received: %s\n", rx);
     memset(rx, 0, 4096);
 
@@ -24,9 +25,11 @@ int main(int argc, char *argv[]) {
 
     while (rx[0] == 0) {
     }
+    sleep(10);
     printf(1, "1 Received: %s\n", rx);
     memset(rx, 0, 4096);
 
+    sleep(20);
     printf(1, "1 %p %d\n", rx, FreeSharedPage(0));
     printf(1, "1 %p %d\n", tx, FreeSharedPage(6));
     exit();
