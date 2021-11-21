@@ -84,7 +84,7 @@ int ls(char *path) {
     struct dirent de;
     struct stat st;
 
-    dirChain *chain = malloc(sizeof(dirChain));
+    dirChain *chain = malloc(sizeof(dirChain)); // FIXME: Page fault occurs often with bigger trees, using too much memory?
 
     chain->next = chain;
     chain->prev = chain;
