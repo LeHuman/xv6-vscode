@@ -211,6 +211,10 @@ int main(int argc, char *argv[]) {
         exit();
     }
 
+    // if (!strcmp(argv[1], '-s')){
+        
+    // }
+
     for (i = 1; i < argc; i++) {
         printf(1, "  %s\n", argv[i]);
         upLevel(0);
