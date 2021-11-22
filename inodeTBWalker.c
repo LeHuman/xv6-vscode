@@ -1,10 +1,14 @@
 #include "types.h"
 #include "stat.h"
 #include "user.h"
+#include "fs.h"
+#include "spinlock.h"
+#include "sleeplock.h"
+#include "file.h"
+#include "param.h"
 
 int main(int argc, char *argv[]) {
-    int fd = 15;
-    int s = close(fd);
-    printf(1, "fd: %d stat: %d\n", fd, s);
+    struct inode *nodes;
+    listNodes(1, nodes);
     exit();
 }

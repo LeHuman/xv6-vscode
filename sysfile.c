@@ -442,3 +442,15 @@ sys_pipe(void)
   fd[1] = fd1;
   return 0;
 }
+
+int sys_listNodes(void) {
+    int f;
+    struct inode *nodes;
+
+    if (argint(0, &f) < 0 || argptr(1, (void *)nodes, sizeof(*nodes)) < 0)
+        return -1;
+
+    ilist(f);
+
+    return 0;
+}

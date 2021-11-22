@@ -9,7 +9,10 @@
         "syscall.h": "c",
         "cstdio": "c",
         "types.h": "c",
-        "*.tcc": "c"
+        "*.tcc": "c",
+        "fcntl.h": "c",
+        "file.h": "c",
+        "sleeplock.h": "c"
     },
     "C_Cpp.clang_format_sortIncludes": false
 }

@@ -213,6 +213,79 @@ ialloc(uint dev, short type)
   panic("ialloc: no inodes");
 }
 
+struct inode *ilist(uint dev) {
+    int inum;
+    struct buf *bp;
+    struct dinode *dip;
+
+    int last = -1;
+    int lst = 0;
+
+    for (inum = 1; inum < sb.ninodes; inum++) {
+        bp = bread(dev, IBLOCK(inum, sb));
+        dip = (struct dinode *)bp->data + inum % IPB;
+        switch (dip->type) {
+        case T_FILE:
+            if (last != T_FILE) {
+                cprintf("\nfiles: ");
+                last = T_FILE;
+                lst = 0;
+            }
+            cprintf("%d s:%d ", inum, dip->size);
+            lst++;
+            if (lst == 4) {
+                lst = 0;
+                cprintf("\n");
+            }
+            break;
+        case T_DIR:
+            if (last != T_DIR) {
+                cprintf("\ndirs: ");
+                last = T_DIR;
+                lst = 0;
+            }
+            cprintf("%d s:%d ", inum, dip->size);
+            lst++;
+            if (lst == 4) {
+                lst = 0;
+                cprintf("\n");
+            }
+            break;
+        case T_DEV:
+            if (last != T_DEV) {
+                cprintf("\ndevs: ");
+                last = T_DEV;
+                lst = 0;
+            }
+            cprintf("%d s:%d ", inum, dip->size);
+            lst++;
+            if (lst == 4) {
+                lst = 0;
+                cprintf("\n");
+            }
+            break;
+        default:
+            if (dip->size != 0) {
+                if (last != 0) {
+                    cprintf("\nFree nodes: ");
+                    last = 0;
+                    lst = 0;
+                }
+                cprintf("%d s:%d a:%d", inum, dip->size);
+                lst++;
+                if (lst == 4) {
+                    lst = 0;
+                    cprintf("\n");
+                }
+            }
+            break;
+        }
+        brelse(bp);
+    }
+    cprintf("\n");
+    return 0;
+}
+
 // Copy a modified in-memory inode to disk.
 // Must be called after every change to an ip->xxx field
 // that lives on disk, since i-node cache is write-through.
