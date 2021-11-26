@@ -117,8 +117,9 @@ void test(int less) {
 int main(int argc, char *argv[]) {
     if (argc > 1)
         randstate = (long unsigned int)argv[1];
+    test(4);
     test(8);
+    test(11);
     test(13);
-    test(16);
     exit();
 }
