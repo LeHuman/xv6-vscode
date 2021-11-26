@@ -7,6 +7,15 @@
 #include "user.h"
 #include "fs.h"
 
+#define MAX_LEVEL 16
+
+int simple_output = 0;
+int level = 0;
+int clevel = 0;
+
+char sidePipe[MAX_LEVEL * 4];
+char pipeLvlStack[MAX_LEVEL];
+
 char *fmtname(char *path, int pad) {
     static char buf[DIRSIZ + 1];
     char *p;
@@ -15,6 +24,8 @@ char *fmtname(char *path, int pad) {
     for (p = path + strlen(path); p >= path && *p != '/'; p--)
         ;
     p++;
+
+    pad &= !simple_output;
 
     // Return blank-padded name.
     if (strlen(p) >= DIRSIZ)
@@ -26,22 +37,20 @@ char *fmtname(char *path, int pad) {
 
 typedef struct dirChain {
     uint inum;
+    uint size;
+    short type;
     int nlen;
     char name[DIRSIZ];
     struct dirChain *prev;
     struct dirChain *next;
 } dirChain;
 
-#define MAX_LEVEL 16
-
-int level = 0;
-int clevel = 0;
-
-char sidePipe[MAX_LEVEL * 4];
-char pipeLvlStack[MAX_LEVEL];
-
 void upLevel(int cont) {
-    if (cont) {
+    if (simple_output) {
+        strcpy(sidePipe + clevel, " ");
+        clevel += 1;
+        pipeLvlStack[level] = 1;
+    } else if (cont) {
         strcpy(sidePipe + clevel, "│ ");
         clevel += 4;
         pipeLvlStack[level] = 4;
@@ -62,21 +71,27 @@ void downLevel() {
 void printLevelSpace(int alt, int file) {
     if (level > 0 || alt) {
         printf(1, "%s", sidePipe);
-        if (alt) {
-            if (file > 0)
-                printf(1, "└--- ");
-            else
-                printf(1, "└ ");
-        } else {
-            if (file > 0)
-                printf(1, "├--- ");
-            else
-                printf(1, "├ ");
+        if (!simple_output) {
+            if (alt) {
+                if (file > 0)
+                    printf(1, "└--- ");
+                else
+                    printf(1, "└ ");
+            } else {
+                if (file > 0)
+                    printf(1, "├--- ");
+                else
+                    printf(1, "├ ");
+            }
         }
     }
 }
 
 void walk(char *path);
+
+void printStat(char *fbuf, uint type, uint inum, uint size) {
+    printf(1, simple_output ? "%s %d %d %d\n" : "%s type: %d inode: %d size: %d\n", fbuf, type, inum, size);
+}
 
 int ls(char *path) {
     char buf[strlen(path) + 1 + DIRSIZ + 1], *p;
@@ -124,7 +139,7 @@ int ls(char *path) {
 
             if (pfile) {
                 printLevelSpace(0, 1);
-                printf(1, "%s inode: %d\n", fbuf, st.ino);
+                printStat(fbuf, st.type, st.ino, st.size);
                 pfile = 0;
             }
 
@@ -147,6 +162,8 @@ int ls(char *path) {
             case T_DIR:
                 if (strcmp(fmtname(buf, 0), ".") && strcmp(fmtname(buf, 0), "..")) { // Ignore system dirs
                     newChain = malloc(sizeof(dirChain));
+                    newChain->type = st.type;
+                    newChain->size = st.size;
                     newChain->inum = st.ino;
                     newChain->nlen = strlen(fmtname(buf, 0));
                     memmove(newChain->name, fmtname(buf, 1), DIRSIZ); // might overread
@@ -163,19 +180,19 @@ int ls(char *path) {
         }
         if (pfile) { // Bottom └ for file not printed at highest node directory?
             printLevelSpace(chain == headChain, 1);
-            printf(1, "%s inode: %d\n", fbuf, st.ino);
+            printStat(fbuf, st.type, st.ino, st.size);
         }
         break;
     }
     close(fd);
-
+    ;
     chain = headChain->next; // Start from beginning
     while (chain != headChain) {
         if (chain->next == headChain)
             printLevelSpace(1, 0);
         else
             printLevelSpace(0, 0);
-        printf(1, "%s inode: %d\n", chain->name, chain->inum);
+        printStat(chain->name, chain->type, chain->inum, chain->size);
         memset(buf, 0, sizeof(buf));
         strcpy(buf, path);
         strcpy(buf + strlen(path), "/");
@@ -201,9 +218,18 @@ void walk(char *path) {
 }
 
 int main(int argc, char *argv[]) {
-    int i;
+    int i = 1;
 
-    if (argc < 2) {
+    if (argc > 1 && !strcmp(argv[1], "-s")) {
+        simple_output = 1;
+        i++;
+    }
+
+    if (argc < 2 || (simple_output & (argc < 3))) {
+        if (simple_output) {
+            ls(".");
+            exit();
+        }
         printf(1, "  .\n");
         upLevel(0);
         ls(".");
@@ -211,11 +237,7 @@ int main(int argc, char *argv[]) {
         exit();
     }
 
-    // if (!strcmp(argv[1], '-s')){
-        
-    // }
-
-    for (i = 1; i < argc; i++) {
+    for (; i < argc; i++) {
         printf(1, "  %s\n", argv[i]);
         upLevel(0);
         ls(argv[i]);
