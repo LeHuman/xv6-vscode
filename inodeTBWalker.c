@@ -11,7 +11,7 @@
 #include "param.h"
 
 int main(int argc, char *argv[]) {
-    int inum = 0;
+    int inum = 2;
     struct dinode dip;
 
     while (1) {
