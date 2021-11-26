@@ -443,14 +443,12 @@ sys_pipe(void)
   return 0;
 }
 
-int sys_listNodes(void) {
-    int f;
-    struct inode *nodes;
+int sys_getdiNode(void) {
+    int dev, inum;
+    struct dinode *node;
 
-    if (argint(0, &f) < 0 || argptr(1, (void *)nodes, sizeof(*nodes)) < 0)
+    if (argint(0, &dev) < 0 || argint(1, &inum) < 0 || argptr(2, (void *)&node, sizeof(*node)) < 0)
         return -1;
 
-    ilist(f);
-
-    return 0;
+    return idget(dev, inum, node);
 }

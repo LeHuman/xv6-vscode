@@ -1,5 +1,5 @@
 struct stat;
-struct inode;
+struct dinode;
 struct rtcdate;
 
 // system calls
@@ -24,7 +24,7 @@ int getpid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
-int listNodes(int fd, struct inode *nodes);
+int getdiNode(int dev, int inum, struct dinode *dip);
 
 // ulib.c
 int stat(const char*, struct stat*);
