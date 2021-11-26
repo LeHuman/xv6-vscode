@@ -206,12 +206,11 @@ ialloc(uint dev, short type) {
     panic("ialloc: no inodes");
 }
 
-
 int idget(int dev, int inum, struct dinode *dip) {
     struct buf *bp;
     struct dinode *_dip;
 
-    if(inum >= sb.ninodes)
+    if (inum >= sb.ninodes)
         return -1;
 
     bp = bread(dev, IBLOCK(inum, sb));
