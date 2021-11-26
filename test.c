@@ -4,10 +4,23 @@
 #include "fs.h"
 #include "fcntl.h"
 
-unsigned long randstate = 1;
-unsigned int rand() {
-    randstate = randstate * 1664525 + 1013904223;
-    return randstate % 1024;
+// http://www.iro.umontreal.ca/~simardr/rng/lfsr113.c
+unsigned int rand(void) {
+    static unsigned int z1 = 12345, z2 = 12345, z3 = 12345, z4 = 12345;
+    unsigned int b;
+    b = ((z1 << 6) ^ z1) >> 13;
+    z1 = ((z1 & 4294967294U) << 18) ^ b;
+    b = ((z2 << 2) ^ z2) >> 27;
+    z2 = ((z2 & 4294967288U) << 2) ^ b;
+    b = ((z3 << 13) ^ z3) >> 21;
+    z3 = ((z3 & 4294967280U) << 7) ^ b;
+    b = ((z4 << 3) ^ z4) >> 12;
+    z4 = ((z4 & 4294967168U) << 13) ^ b;
+    return (z1 ^ z2 ^ z3 ^ z4);
+}
+
+int randr(int min, int max) {
+    return min + (rand() % (int)(max - min + 1));
 }
 
 //https://www.techiedelight.com/implement-itoa-function-in-c/
@@ -74,8 +87,26 @@ char *itoa(int value, char *buffer, int base) {
     return reverse(buffer, 0, i - 1);
 }
 
-int lvl = 0;
+static char *rand_string(int size) {
+    const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890+/*-.!@#$%%^&*()_+<>?:\"{}|-=[]\\;',./";
+    static char str[256];
 
+    size %= 256;
+
+    if (size) {
+        --size;
+        int n;
+        for (n = 0; n < size; n++) {
+            int key = rand() % (int)(sizeof charset - 1);
+            str[n] = charset[key];
+        }
+        str[size] = '\0';
+    }
+
+    return str;
+}
+
+int lvl = 0;
 int depth = 1;
 
 void test(int less) {
@@ -85,7 +116,7 @@ void test(int less) {
     int pos = 1;
     int i;
     while (lvl < less) {
-        if (rand() < 256) {
+        if (randr(0, 1024) < 256) {
             if (pos != 1)
                 buf[++pos] = '/';
             strcpy(buf + pos + 1, "lvl");
@@ -95,31 +126,35 @@ void test(int less) {
             --pos;
         }
         mkdir(buf);
-        if (depth != 0 && rand() < 32 && fork() == 0) {
+        if (depth != 0 && randr(0, 1024) < 32 && fork() == 0) {
             depth--;
             lvl = 0;
-            randstate = rand() % (rand() % 512);
         } else {
             wait();
         }
         for (i = 0; i < 5; i++) {
-            if (rand() < 64) {
+            if (randr(0, 1024) < 64) {
                 if (pos != 1)
                     buf[pos + 1] = '/';
                 strcpy(buf + pos + 2, "file");
                 itoa(i, buf + pos + 6, 10);
-                close(open(buf, O_CREATE));
+
+                int f = open(buf, O_CREATE | O_WRONLY);
+                int j;
+                for (j = 0; j < rand() % randr(1, 32); j++) {
+                    printf(f, "%s", rand_string(randr(0, 256)));
+                }
+                close(f);
             }
         }
     }
 }
 
 int main(int argc, char *argv[]) {
-    if (argc > 1)
-        randstate = (long unsigned int)argv[1];
-    test(4);
-    test(8);
-    test(11);
-    test(13);
+    int i;
+    for (i = 0; i < 13; i += 3) {
+        printf(1, "%d / %d\n", i, 12);
+        test(i);
+    }
     exit();
 }
