@@ -33,6 +33,11 @@ void cmp(char *dir_line, char *TB_line) {
 // recoveryWalker dOut tOut
 //
 
+// mkdir yes
+// echo afaf > yes/ahah
+// rm yes
+// directoryWalke
+
 void walk(int dirOut, int TBOut) {
     char dBuf[512];
     char tBuf[512];
