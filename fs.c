@@ -313,7 +313,8 @@ void ilock(struct inode *ip) {
         brelse(bp);
         ip->valid = 1;
         if (ip->type == 0)
-            panic("ilock: no type");
+            cprintf("warning: ilock: no type\n");
+        //     panic("ilock: no type");
     }
 }
 
