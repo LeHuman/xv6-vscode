@@ -176,6 +176,11 @@ int ls(char *path) {
 
                     chain = chain->next;
                 }
+            case T_DEV:
+                break;
+            default:
+                pfile = 1;
+                memmove(fbuf, "INVALID_INODE", DIRSIZ);
             }
         }
         if (pfile) { // Bottom └ for file not printed at highest node directory?
