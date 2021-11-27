@@ -24,6 +24,7 @@ int getpid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
+int funlink(const char*);
 int getdiNode(int dev, int inum, struct dinode *dip);
 
 // ulib.c

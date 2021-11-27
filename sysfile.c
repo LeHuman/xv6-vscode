@@ -180,6 +180,48 @@ isdirempty(struct inode *dp)
   return 1;
 }
 
+int sys_funlink(void) {
+    struct inode *ip, *dp;
+    char name[DIRSIZ], *path;
+    uint off;
+
+    if (argstr(0, &path) < 0)
+        return -1;
+
+    begin_op();
+    if ((dp = nameiparent(path, name)) == 0) {
+        end_op();
+        return -1;
+    }
+
+    ilock(dp);
+
+    // Cannot unlink "." or "..".
+    if (namecmp(name, ".") == 0 || namecmp(name, "..") == 0)
+        goto bad;
+
+    if ((ip = dirlookup(dp, name, &off)) == 0)
+        goto bad;
+    ilock(ip);
+    iunlockput(dp);
+
+    if (ip->nlink < 1)
+        panic("unlink: nlink < 1");
+
+    ip->nlink--;
+    iupdate(ip);
+    iunlockput(ip);
+
+    end_op();
+
+    return 0;
+
+bad:
+    iunlockput(dp);
+    end_op();
+    return -1;
+}
+
 //PAGEBREAK!
 int
 sys_unlink(void)
