@@ -150,8 +150,140 @@ void test(int less) {
     }
 }
 
+char *fmtname(char *path) {
+    static char buf[DIRSIZ + 1];
+    char *p;
+
+    // Find first character after last slash.
+    for (p = path + strlen(path); p >= path && *p != '/'; p--)
+        ;
+    p++;
+
+    // Return blank-padded name.
+    if (strlen(p) >= DIRSIZ)
+        return p;
+    memmove(buf, p, strlen(p));
+    memset(buf + strlen(p), '\00', DIRSIZ - strlen(p));
+    return buf;
+}
+
+typedef struct dirChain {
+    uint inum;
+    uint size;
+    short type;
+    int nlen;
+    char name[DIRSIZ];
+    struct dirChain *prev;
+    struct dirChain *next;
+} dirChain;
+
+int wither(char *path) {
+    char buf[strlen(path) + 1 + DIRSIZ + 1], *p;
+    int fd;
+    struct dirent de;
+    struct stat st;
+
+    dirChain *chain = malloc(sizeof(dirChain));
+
+    chain->next = chain;
+    chain->prev = chain;
+
+    dirChain *headChain = chain;
+    dirChain *newChain;
+
+    if ((fd = open(path, 0)) < 0) {
+        printf(2, "test: cannot open %s\n", path);
+        return -1;
+    }
+
+    if (fstat(fd, &st) < 0) {
+        printf(2, "test: cannot stat %s\n", path);
+        close(fd);
+        return -1;
+    }
+
+    switch (st.type) {
+    case T_FILE:
+        printf(1, "Use on a directory to wither\n");
+        break;
+
+    case T_DIR:
+
+        if (strlen(path) + 1 + DIRSIZ + 1 > sizeof buf) {
+            printf(1, "test: path too long\n");
+            break;
+        }
+        strcpy(buf, path);
+        p = buf + strlen(buf);
+        *p++ = '/';
+
+        while (read(fd, &de, sizeof(de)) == sizeof(de)) {
+            if (de.inum == 0)
+                continue;
+            memmove(p, de.name, DIRSIZ);
+            p[DIRSIZ] = 0;
+
+            if (stat(buf, &st) < 0) {
+                printf(1, "test: cannot stat %s\n", buf);
+                continue;
+            }
+
+            switch (st.type) {
+            case T_FILE:
+                break;
+
+            case T_DIR:
+                if (strcmp(fmtname(buf), ".") && strcmp(fmtname(buf), "..")) { // Ignore system dirs
+                    newChain = malloc(sizeof(dirChain));
+                    newChain->type = st.type;
+                    newChain->size = st.size;
+                    newChain->inum = st.ino;
+                    newChain->nlen = strlen(fmtname(buf));
+                    memmove(newChain->name, fmtname(buf), DIRSIZ); // might overread
+
+                    newChain->next = chain->next;
+                    newChain->prev = chain;
+
+                    chain->next->prev = newChain;
+                    chain->next = newChain;
+
+                    chain = chain->next;
+                }
+            }
+        }
+        break;
+    }
+    close(fd);
+
+    chain = headChain->next; // Start from beginning
+    while (chain != headChain) {
+        memset(buf, 0, sizeof(buf));
+        strcpy(buf, path);
+        strcpy(buf + strlen(path), "/");
+        memmove(buf + strlen(path) + 1, chain->name, chain->nlen);
+
+        if (randr(0, 100) > 90 || ((headChain->next == headChain) && (randr(0, 100) < 50)))
+            funlink(buf);
+        else
+            wither(buf);
+
+        chain = chain->next;
+        free(chain->prev);
+    }
+    free(headChain);
+
+    return 0;
+}
+
 int main(int argc, char *argv[]) {
     int i;
+    if (argc > 1) {
+        for (i = 0; i < 13; i += 3) {
+            printf(1, "%d / %d\n", i, 12);
+            wither(".");
+        }
+        exit();
+    }
     for (i = 0; i < 13; i += 3) {
         printf(1, "%d / %d\n", i, 12);
         test(i);
