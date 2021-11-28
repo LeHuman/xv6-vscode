@@ -176,11 +176,14 @@ int ls(char *path) {
 
                     chain = chain->next;
                 }
+                break;
             case T_DEV:
+                pfile = 1;
+                memmove(fbuf, fmtname("Device", 1), DIRSIZ); // Don't care about devices, just name as is
                 break;
             default:
                 pfile = 1;
-                memmove(fbuf, "INVALID_INODE", DIRSIZ);
+                memmove(fbuf, fmtname("INVALID_INODE", 1), DIRSIZ);
             }
         }
         if (pfile) { // Bottom └ for file not printed at highest node directory?
@@ -190,7 +193,6 @@ int ls(char *path) {
         break;
     }
     close(fd);
-    ;
     chain = headChain->next; // Start from beginning
     while (chain != headChain) {
         if (chain->next == headChain)
