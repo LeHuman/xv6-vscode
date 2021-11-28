@@ -20,9 +20,9 @@ int main(int argc, char *argv[]) {
         switch (dip.type) {
         case T_FILE:
         case T_DIR:
+        case T_DEV:
             printf(1, "%d %d %d\n", dip.type, inum - 1, dip.size);
             break;
-        case T_DEV:
         default:
             break;
         }
