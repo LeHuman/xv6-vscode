@@ -28,16 +28,6 @@ void cmp(char *dir_line, char *TB_line) {
     printf(1, "%d %s %s\n", level, dir_line, TB_line);
 }
 
-// directoryWalke -s > dOut
-// inodeTBWalker > tOut
-// recoveryWalker dOut tOut
-//
-
-// mkdir yes
-// echo afaf > yes/ahah
-// rm yes
-// directoryWalke
-
 void walk(int dirOut, int TBOut) {
     char dBuf[512];
     char tBuf[512];
@@ -86,7 +76,39 @@ void walk(int dirOut, int TBOut) {
     }
 }
 
+// char *argd[MAXARG] = {"directoryWalker", "-s"};
+// char *argt[MAXARG] = {"inodeTBWalker"};
+
 int main(int argc, char *argv[]) {
+
+    // if (fork() == 0) {
+    //     close(1);
+    //     int o = open("dOut", O_WRONLY);
+    //     dup(o);
+    //     close(o);
+    //     exec(argd[0], argd);
+    //     printf(2, "exec directoryWalker failed\n");
+    //     exit();
+    // }
+
+    // if (fork() == 0) {
+    //     close(1);
+    //     int o = open("tOut", O_WRONLY);
+    //     dup(o);
+    //     close(o);
+    //     exec(argt[0], argt);
+    //     printf(2, "exec inodeTBWalker failed\n");
+    //     exit();
+    // }
+
+    // wait();
+    // wait();
+
+    // exit();
+
+    // directoryWalke -s > dOut
+    // inodeTBWalker > tOut
+    // recoveryWalker dOut tOut
 
     if (argc > 2) {
         printf(1, "Recovery Walk %s %s\n", argv[1], argv[2]);
