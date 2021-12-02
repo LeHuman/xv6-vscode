@@ -76,52 +76,38 @@ void walk(int dirOut, int TBOut) {
     }
 }
 
-// char *argd[MAXARG] = {"directoryWalker", "-s"};
-// char *argt[MAXARG] = {"inodeTBWalker"};
-
 int main(int argc, char *argv[]) {
 
-    // if (fork() == 0) {
-    //     close(1);
-    //     int o = open("dOut", O_WRONLY);
-    //     dup(o);
-    //     close(o);
-    //     exec(argd[0], argd);
-    //     printf(2, "exec directoryWalker failed\n");
-    //     exit();
-    // }
-
-    // if (fork() == 0) {
-    //     close(1);
-    //     int o = open("tOut", O_WRONLY);
-    //     dup(o);
-    //     close(o);
-    //     exec(argt[0], argt);
-    //     printf(2, "exec inodeTBWalker failed\n");
-    //     exit();
-    // }
-
-    // wait();
-    // wait();
-
-    // exit();
-
-    // directoryWalke -s > dOut
-    // inodeTBWalker > tOut
-    // recoveryWalker dOut tOut
-
-    if (argc > 2) {
-        printf(1, "Recovery Walk %s %s\n", argv[1], argv[2]);
-        int dirOut = open(argv[1], O_RDONLY);
-        int TBOut = open(argv[2], O_RDONLY);
-
-        walk(dirOut, TBOut);
-
-        close(dirOut);
-        close(TBOut);
-    } else {
-        printf(1, "Usage %s directoryWalkerOutput TBWalterOutput\n", argv[0]);
+    if (fork() == 0) {
+        close(1);
+        open("dOut", O_CREATE | O_WRONLY);
+        char *argd[MAXARG] = {"directoryWalker", "-s"};
+        exec(argd[0], argd);
+        printf(2, "exec directoryWalker failed\n");
+        exit();
     }
+
+    if (fork() == 0) {
+        close(1);
+        open("tOut", O_CREATE | O_WRONLY);
+        char *argt[MAXARG] = {"inodeTBWalker"};
+        exec(argt[0], argt);
+        printf(2, "exec inodeTBWalker failed\n");
+        exit();
+    }
+
+    wait();
+    wait();
+
+    printf(1, "Run Recovery Walk\n");
+
+    int dirOut = open("dOut", O_RDONLY);
+    int TBOut = open("tOut", O_RDONLY);
+
+    walk(dirOut, TBOut);
+
+    close(dirOut);
+    close(TBOut);
 
     exit();
 }
