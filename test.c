@@ -108,6 +108,7 @@ static char *rand_string(int size) {
 
 int lvl = 0;
 int depth = 1;
+int child = 0;
 
 void test(int less) {
     char buf[256];
@@ -127,6 +128,7 @@ void test(int less) {
         }
         mkdir(buf);
         if (depth != 0 && randr(0, 1024) < 32 && fork() == 0) {
+            child = 1;
             depth--;
             lvl = 0;
         } else {
@@ -277,16 +279,32 @@ int wither(char *path) {
 
 int main(int argc, char *argv[]) {
     int i;
-    if (argc > 1) {
-        for (i = 0; i < 13; i += 3) {
-            printf(1, "%d / %d\n", i, 12);
-            wither(".");
-        }
-        exit();
-    }
+
+    printf(1, "Creating Dummy Directory Tree\n");
     for (i = 0; i < 13; i += 3) {
         printf(1, "%d / %d\n", i, 12);
         test(i);
     }
+
+    if (child || argc > 1) // don't continue if given an argument
+        exit();
+
+    printf(1, "Withering Current Directories\n");
+    for (i = 0; i < 13; i += 3) {
+        printf(1, "%d / %d\n", i, 12);
+        wither(".");
+    }
+
+    if (argc > 2) // don't continue if given two arguments
+        exit();
+
+    printf(1, "Running recovery program\n");
+    if (fork() == 0) {
+        char *arg[1] = {"recoveryWalker"};
+        exec(arg[0], arg);
+        printf(2, "running recovery failed\n");
+        exit();
+    }
+    wait();
     exit();
 }
