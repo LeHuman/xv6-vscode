@@ -139,6 +139,47 @@ void DirLine(char *line) {
 
 void walk(int dirOut, int TBOut) {
     populateTBnodes(TBOut);
+
+    char dBuf[512];
+    int dn = 1;
+    int dc = 0;
+    int d = 0;
+
+    while (1) {
+        if (!d && dn > 0) {
+            dn = read(dirOut, dBuf + dc, 1);
+        }
+
+        if (dn <= 0) {
+            break;
+        }
+
+        d = dBuf[dc] == '\n';
+
+        dc += !d;
+
+        if (d) {
+            d = 0;
+            dBuf[dc] = 0;
+            dc = 0;
+
+            int level = 0;
+            char *dir_line = padTrim(dBuf, &level);
+
+            DirLine(dir_line);
+        }
+    }
+
+    if (dn < 0) {
+        printf(2, "read error\n");
+        exit();
+    }
+
+    TBnode *list = headTBnode.next;
+    while (list->next != &headTBnode) {
+        printf(1, "Orphaned inode %d\n", list->inum);
+        list = list->next;
+    }
 }
 
 int main(int argc, char *argv[]) {
