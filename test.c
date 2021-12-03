@@ -294,6 +294,10 @@ int main(int argc, char *argv[]) {
         printf(1, "%d / %d\n", i, 12);
         wither(".");
     }
+    for (i = 0; i < 13; i += 3) {
+        printf(1, "%d / %d\n", i, 12);
+        wither(".");
+    }
 
     if (argc > 2) // don't continue if given two arguments
         exit();
