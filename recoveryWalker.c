@@ -47,6 +47,20 @@ void newTBnode(int type, int inum, int size) {
     TBnodes = TBnodes->next;
 }
 
+void removeTBnode(int inum) {
+    TBnode *list = headTBnode.next;
+    while (list->next != &headTBnode) {
+        if (list->inum == inum) {
+            list->prev->next = list->next;
+            list->next->prev = list->prev;
+            free(list);
+            return;
+        }
+
+        list = list->next;
+    }
+}
+
 void TBnodeLine(char *line) {
     int i = 0;
     int n[3];
@@ -104,43 +118,27 @@ void populateTBnodes(int TBOut) {
     TBnodes = headTBnode.next; // Point to first element
 }
 
+void DirLine(char *line) {
+    int i = -1;
+    int n[3];
+
+    char *last = line;
+
+    while (i < 3) {
+        if ((*line == ' ' || *line == '\000') && i++ != -1) {
+            *line = '\000';
+            n[i] = atoi(last);
+            last = ++line;
+        }
+        line++;
+    }
+
+    if (n[0] == T_DIR || n[0] == T_FILE)
+        removeTBnode(n[1]);
+}
+
 void walk(int dirOut, int TBOut) {
     populateTBnodes(TBOut);
-
-    char dBuf[512];
-    int dn = 1;
-    int dc = 0;
-    int d = 0;
-
-    while (1) {
-        if (!d && dn > 0) {
-            dn = read(dirOut, dBuf + dc, 1);
-        }
-
-        if (dn <= 0) {
-            break;
-        }
-
-        d = dBuf[dc] == '\n';
-
-        dc += !d;
-
-        if (d) {
-            d = 0;
-            dBuf[dc] = 0;
-            dc = 0;
-
-            int level = 0;
-            char *dir_line = padTrim(dBuf, &level);
-
-            printf(1, "%d %s\n", level, dir_line);
-        }
-    }
-
-    if (dn < 0) {
-        printf(2, "read error\n");
-        exit();
-    }
 }
 
 int main(int argc, char *argv[]) {

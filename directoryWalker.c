@@ -182,7 +182,7 @@ int ls(char *path) {
                 memmove(fbuf, fmtname("Device", 1), DIRSIZ); // Don't care about devices, just name as is
                 break;
             default:
-                if (recover(1, st.ino, T_DIR) == 0){
+                if (recover(1, st.ino, T_DIR) == 0){ // Try to recover node as directory
                     goto tryAgain;
                 }
                 pfile = 1;
