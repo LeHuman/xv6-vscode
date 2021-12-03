@@ -208,7 +208,9 @@ int sys_funlink(void) {
     if (ip->nlink < 1)
         panic("unlink: nlink < 1");
 
-    ip->nlink--;
+    ip->type = 0;
+
+    // ip->nlink--; // causes truncate, wiping node off disc
     iupdate(ip);
     iunlockput(ip);
 
@@ -220,6 +222,23 @@ bad:
     iunlockput(dp);
     end_op();
     return -1;
+}
+
+int sys_recover(void) {
+    int dev, inum, type;
+
+    if (argint(0, &dev) < 0 || argint(1, &inum) < 0 || argint(2, &type) < 0)
+        return -1;
+
+    if (type != T_FILE && type != T_DIR)
+        return -1;
+
+    begin_op();
+
+    int n = irec(dev, inum, type);
+
+    end_op();
+    return n;
 }
 
 //PAGEBREAK!

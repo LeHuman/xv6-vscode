@@ -22,3 +22,4 @@
 #define SYS_close  21
 #define SYS_getdiNode  22
 #define SYS_funlink  23
+#define SYS_recover  24

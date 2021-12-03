@@ -25,6 +25,7 @@ char* sbrk(int);
 int sleep(int);
 int uptime(void);
 int funlink(const char*);
+int recover(int dev, int inum, int type);
 int getdiNode(int dev, int inum, struct dinode *dip);
 
 // ulib.c

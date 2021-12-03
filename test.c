@@ -286,7 +286,7 @@ int main(int argc, char *argv[]) {
         test(i);
     }
 
-    if (child || argc > 1) // don't continue if given an argument
+    if (child || argc > 2)  // don't continue if given two arguments
         exit();
 
     printf(1, "Withering Current Directories\n");
@@ -299,7 +299,7 @@ int main(int argc, char *argv[]) {
         wither(".");
     }
 
-    if (argc > 2) // don't continue if given two arguments
+    if (argc > 1) // don't continue if given an argument
         exit();
 
     printf(1, "Running recovery program\n");

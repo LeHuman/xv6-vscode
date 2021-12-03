@@ -21,13 +21,6 @@ char *padTrim(const char *ps, int *count) {
     return 0;
 }
 
-void cmp(char *dir_line, char *TB_line) {
-    int level = 0;
-    dir_line = padTrim(dir_line, &level);
-
-    printf(1, "%d %s %s\n", level, dir_line, TB_line);
-}
-
 typedef struct TBnode {
     int type;
     int inum;
@@ -69,7 +62,8 @@ void TBnodeLine(char *line) {
         line++;
     }
 
-    newTBnode(n[0], n[1], n[2]);
+    if (n[0] == T_DIR || n[0] == T_FILE)
+        newTBnode(n[0], n[1], n[2]);
 }
 
 void populateTBnodes(int TBOut) {
@@ -101,54 +95,50 @@ void populateTBnodes(int TBOut) {
             TBnodeLine(tBuf);
         }
     }
+
+    if (tn < 0) {
+        printf(2, "read error\n");
+        exit();
+    }
+
+    TBnodes = headTBnode.next; // Point to first element
 }
 
 void walk(int dirOut, int TBOut) {
     populateTBnodes(TBOut);
 
     char dBuf[512];
-    char tBuf[512];
-    int dn = 1, tn = 1;
-    int dc = 0, tc = 0;
-
-    int d = 0, t = 0;
+    int dn = 1;
+    int dc = 0;
+    int d = 0;
 
     while (1) {
         if (!d && dn > 0) {
             dn = read(dirOut, dBuf + dc, 1);
-            // printf(1, "%d\n", dn);
         }
 
-        if (!t && tn > 0) {
-            tn = read(TBOut, tBuf + tc, 1);
-            // printf(1, "%d\n", tn);
-        }
-
-        if (dn <= 0 || tn <= 0) {
+        if (dn <= 0) {
             break;
         }
 
         d = dBuf[dc] == '\n';
-        t = tBuf[tc] == '\n';
 
         dc += !d;
-        tc += !t;
 
-        if (d && t) {
+        if (d) {
             d = 0;
-            t = 0;
-
             dBuf[dc] = 0;
             dc = 0;
-            tBuf[tc] = 0;
-            tc = 0;
 
-            cmp(dBuf, tBuf);
+            int level = 0;
+            char *dir_line = padTrim(dBuf, &level);
+
+            printf(1, "%d %s\n", level, dir_line);
         }
     }
 
-    if (dn < 0 || tn < 0) {
-        printf(1, "read error\n");
+    if (dn < 0) {
+        printf(2, "read error\n");
         exit();
     }
 }

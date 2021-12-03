@@ -280,6 +280,23 @@ iget(uint dev, uint inum) {
     return ip;
 }
 
+int irec(int dev, int inum, int type) {
+    struct inode *ip;
+
+    if ((ip = iget(dev, inum)) != 0) { // Entry found to restore
+        ilock(ip);
+        cprintf("recover %d %d %d\n", dev, inum, type);
+        ip->type = type;
+        ip->valid = 1;
+        // ip->nlink = 1; // TODO: account for nodes completely wiped off disc
+        iupdate(ip);
+        iunlockput(ip);
+        return 0;
+    }
+
+    return -1;
+}
+
 // Increment reference count for ip.
 // Returns ip to enable ip = idup(ip1) idiom.
 struct inode *

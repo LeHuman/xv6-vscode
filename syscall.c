@@ -105,6 +105,7 @@ extern int sys_write(void);
 extern int sys_uptime(void);
 extern int sys_getdiNode(void);
 extern int sys_funlink(void);
+extern int sys_recover(void);
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -130,6 +131,7 @@ static int (*syscalls[])(void) = {
 [SYS_close]   sys_close,
 [SYS_getdiNode]sys_getdiNode,
 [SYS_funlink] sys_funlink,
+[SYS_recover] sys_recover,
 };
 
 void

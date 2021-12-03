@@ -136,7 +136,7 @@ int ls(char *path) {
         char fbuf[DIRSIZ];
 
         while (read(fd, &de, sizeof(de)) == sizeof(de)) {
-
+        tryAgain:
             if (pfile) {
                 printLevelSpace(0, 1);
                 printStat(fbuf, st.type, st.ino, st.size);
@@ -182,6 +182,9 @@ int ls(char *path) {
                 memmove(fbuf, fmtname("Device", 1), DIRSIZ); // Don't care about devices, just name as is
                 break;
             default:
+                if (recover(1, st.ino, T_DIR) == 0){
+                    goto tryAgain;
+                }
                 pfile = 1;
                 memmove(fbuf, fmtname("INVALID_INODE", 1), DIRSIZ);
             }
