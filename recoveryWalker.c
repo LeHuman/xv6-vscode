@@ -28,7 +28,84 @@ void cmp(char *dir_line, char *TB_line) {
     printf(1, "%d %s %s\n", level, dir_line, TB_line);
 }
 
+typedef struct TBnode {
+    int type;
+    int inum;
+    int size;
+    struct TBnode *next;
+    struct TBnode *prev;
+} TBnode;
+
+static TBnode headTBnode = {-1, -1, -1, &headTBnode, &headTBnode};
+static TBnode *TBnodes = &headTBnode;
+
+void newTBnode(int type, int inum, int size) {
+    TBnode *newNode = malloc(sizeof(TBnode));
+    newNode->type = type;
+    newNode->inum = inum;
+    newNode->size = size;
+
+    newNode->next = TBnodes->next;
+    newNode->prev = TBnodes;
+
+    TBnodes->next->prev = newNode;
+    TBnodes->next = newNode;
+
+    TBnodes = TBnodes->next;
+}
+
+void TBnodeLine(char *line) {
+    int i = 0;
+    int n[3];
+
+    char *last = line;
+
+    while (i < 3) {
+        if (*line == ' ' || *line == '\000') {
+            *line = '\000';
+            n[i++] = atoi(last);
+            last = ++line;
+        }
+        line++;
+    }
+
+    newTBnode(n[0], n[1], n[2]);
+}
+
+void populateTBnodes(int TBOut) {
+    char tBuf[512];
+    int tn = 1;
+    int tc = 0;
+
+    int t = 0;
+
+    while (1) {
+
+        if (!t && tn > 0) {
+            tn = read(TBOut, tBuf + tc, 1);
+        }
+
+        if (tn <= 0) {
+            break;
+        }
+
+        t = tBuf[tc] == '\n';
+
+        tc += !t;
+
+        if (t) {
+            t = 0;
+            tBuf[tc] = 0;
+            tc = 0;
+
+            TBnodeLine(tBuf);
+        }
+    }
+}
+
 void walk(int dirOut, int TBOut) {
+    populateTBnodes(TBOut);
+
     char dBuf[512];
     char tBuf[512];
     int dn = 1, tn = 1;
@@ -78,6 +155,8 @@ void walk(int dirOut, int TBOut) {
 
 int main(int argc, char *argv[]) {
 
+    printf(1, "Storing walker outputs\n");
+
     if (fork() == 0) {
         close(1);
         open("dOut", O_CREATE | O_WRONLY);
@@ -99,7 +178,7 @@ int main(int argc, char *argv[]) {
     wait();
     wait();
 
-    printf(1, "Run Recovery Walk\n");
+    printf(1, "Run recovery walk\n");
 
     int dirOut = open("dOut", O_RDONLY);
     int TBOut = open("tOut", O_RDONLY);
